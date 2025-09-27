@@ -27,7 +27,6 @@ func NewUserHandler(s service.UserService) *UserHandler {
 	return &UserHandler{svc: s}
 }
 
-// CreateUser registers a new user
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var req models.User
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -41,9 +40,6 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, user)
 }
-
-// CreateTodo creates a todo for a specific user
-// Route: POST /users/:user_id/todos
 func (h *TodoHandler) CreateTodo(c *gin.Context) {
 	userIDParam := c.Param("user_id")
 	userID, err := uuid.Parse(userIDParam)
@@ -63,15 +59,12 @@ func (h *TodoHandler) CreateTodo(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	// If tag IDs were provided, fetch and associate them now.
 	if len(req.TagIDs) > 0 {
 		tags, err := h.tagSvc.GetTagsByIDs(userID, req.TagIDs)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid or unauthorized tag IDs"})
 			return
 		}
-		// Validate all requested tags were found
 		if len(tags) != len(req.TagIDs) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "one or more tag IDs not found"})
 			return
@@ -81,15 +74,11 @@ func (h *TodoHandler) CreateTodo(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to attach tags"})
 			return
 		}
-		// Populate tags in response immediately
 		todo.Tags = tags
 	}
 
 	c.JSON(http.StatusCreated, todo)
 }
-
-// GetAllTodos retrieves all todos (with their tags) for a specific user
-// Route: GET /users/:user_id/todos
 func (h *TodoHandler) GetAllTodos(c *gin.Context) {
 	userIDParam := c.Param("user_id")
 	userID, err := uuid.Parse(userIDParam)
@@ -105,9 +94,6 @@ func (h *TodoHandler) GetAllTodos(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, todos)
 }
-
-// UpdateTodoHandler updates a user's todo
-// Route: PATCH /users/:user_id/todos/:id
 func (h *TodoHandler) UpdateTodoHandler(c *gin.Context) {
 	userIDParam := c.Param("user_id")
 	userID, err := uuid.Parse(userIDParam)
@@ -137,9 +123,6 @@ func (h *TodoHandler) UpdateTodoHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": todo})
 }
-
-// DeleteTodoHandler deletes a user's todo
-// Route: DELETE /users/:user_id/todos/:id
 func (h *TodoHandler) DeleteTodoHandler(c *gin.Context) {
 	userIDParam := c.Param("user_id")
 	userID, err := uuid.Parse(userIDParam)
@@ -175,9 +158,6 @@ type TagHandler struct {
 func NewTagHandler(s service.TagService) *TagHandler {
 	return &TagHandler{svc: s}
 }
-
-// CreateTag creates a tag for a specific user
-// Route: POST /users/:user_id/tags
 func (h *TagHandler) CreateTag(c *gin.Context) {
 	userIDParam := c.Param("user_id")
 	userID, err := uuid.Parse(userIDParam)
@@ -200,9 +180,6 @@ func (h *TagHandler) CreateTag(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, tag)
 }
-
-// GetTagsByUser retrieves all tags for a specific user
-// Route: GET /users/:user_id/tags
 func (h *TagHandler) GetTagsByUser(c *gin.Context) {
 	userIDParam := c.Param("user_id")
 	userID, err := uuid.Parse(userIDParam)
@@ -219,9 +196,6 @@ func (h *TagHandler) GetTagsByUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, tags)
 }
-
-// DeleteTag deletes a tag for a specific user
-// Route: DELETE /users/:user_id/tags/:id
 func (h *TagHandler) DeleteTag(c *gin.Context) {
 	userIDParam := c.Param("user_id")
 	userID, err := uuid.Parse(userIDParam)

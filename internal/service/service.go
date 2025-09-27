@@ -62,15 +62,9 @@ func (s *todoService) CreateTodo(userID uuid.UUID, req *models.CreateTodoRequest
 		Completed:   req.Completed,
 		UserID:      userID,
 	}
-	// Create the todo first
 	if err := s.repo.CreateTodo(todo); err != nil {
 		return nil, err
 	}
-
-	// If there are tag IDs, we need access to tag repository functions. We only have TodoRepository here.
-	// Strategy: type assert underlying repository if it also implements TagRepository methods is not possible cleanly.
-	// Instead, association will be handled at handler level OR via a separate service. To keep it simple without changing constructor wiring,
-	// we will perform tag association in a follow-up step in the handler using a new TagService passed there.
 	return todo, nil
 }
 
@@ -124,7 +118,6 @@ func (s *tagService) GetTagsByIDs(userID uuid.UUID, ids []uuid.UUID) ([]models.T
 	return s.repo.GetTagsByIDs(userID, ids)
 }
 
-// AttachTags associates tags with a todo (no-op if tags slice empty)
 func (s *todoService) AttachTags(todo *models.Todo, tags []models.Tag) error {
 	if len(tags) == 0 {
 		return nil
@@ -136,7 +129,6 @@ func (s *todoService) AttachTags(todo *models.Todo, tags []models.Tag) error {
 	return nil
 }
 
-// CompleteOverdueTodos sets completed=true for all todos whose due_date has passed
 func (s *todoService) CompleteOverdueTodos(now time.Time) (int64, error) {
 	return s.repo.CompleteOverdueTodos(now)
 }

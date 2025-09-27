@@ -21,6 +21,7 @@ type TodoRepository interface {
 
 type UserRepository interface {
 	CreateUser(user *models.User) error
+	GetUserByID(id uuid.UUID) (*models.User, error)
 }
 
 type TagRepository interface {
@@ -73,7 +74,7 @@ func (a *userRepository) CreateUser(user *models.User) error {
 	user.UpdatedAt = now
 
 	if err := a.db.Create(user).Error; err != nil {
-		return fmt.Errorf("user cannot be found")
+		return fmt.Errorf("failed to create user: %w", err)
 	}
 	return nil
 }
