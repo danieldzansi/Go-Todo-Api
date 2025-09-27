@@ -1,0 +1,24 @@
+meta {
+  name: post todos
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:8080/api/v1/users/716d6bef-83ec-4515-8a0c-0e2d66965ee6/todos
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "title":"a pointer in Go",
+    "description":"testing api endpoint",
+    "tag_ids":["6baadd0d-7223-488d-bd37-6e1686d226d7"],
+    "completed":true
+  }
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,24 @@
+# Build artifacts
+/out
+/bin
+/dist
+
+# VCS
+.git
+.gitignore
+
+# Editor/OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Dependencies caches
+**/node_modules
+**/.cache
+
+# Go build/test cache
+**/*.test
+**/coverage*
+**/*.cover
+**/.env

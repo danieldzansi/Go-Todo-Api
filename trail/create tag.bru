@@ -1,0 +1,21 @@
+meta {
+  name: create tag
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:8080/api/v1/users/716d6bef-83ec-4515-8a0c-0e2d66965ee6/tags
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name":"Work"
+  }
+}
+
+settings {
+  encodeUrl: true
+}
