@@ -1,17 +1,21 @@
 package service
 
 import (
+	"fmt"
 	"log"
 	"time"
 
 	models "github.com/danieldzansi/auth-api/internal/models"
 	"github.com/danieldzansi/auth-api/internal/repository"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type TodoService interface {
 	CreateTodo(userID uuid.UUID, req *models.CreateTodoRequest) (*models.Todo, error)
 	GetAllTodos() ([]models.Todo, error)
+	GetTodoByID(userID, id uuid.UUID) (*models.Todo, error)
 	UpdateTodo(userID, id uuid.UUID, req *models.UpdateTodoRequest) (*models.Todo, error)
 	DeleteTodo(userID, id uuid.UUID) (*models.Todo, error)
 	GetTodosByUser(userID uuid.UUID) ([]models.Todo, error)
@@ -21,6 +25,7 @@ type TodoService interface {
 
 type UserService interface {
 	CreateUser(req *models.User) (*models.User, error)
+	Userlogin(req *models.Login) (string, error)
 }
 
 type TagService interface {
@@ -72,6 +77,10 @@ func (s *todoService) GetAllTodos() ([]models.Todo, error) {
 	return s.repo.GetAllTodos()
 }
 
+func (s *todoService) GetTodoByID(userID, id uuid.UUID) (*models.Todo, error) {
+	return s.repo.GetTodoByID(userID, id)
+}
+
 func (s *todoService) UpdateTodo(userID, id uuid.UUID, req *models.UpdateTodoRequest) (*models.Todo, error) {
 	return s.repo.UpdateTodo(userID, id, req)
 }
@@ -80,11 +89,15 @@ func (s *todoService) DeleteTodo(userID, id uuid.UUID) (*models.Todo, error) {
 	return s.repo.DeleteTodo(userID, id)
 }
 func (s *userService) CreateUser(req *models.User) (*models.User, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
 	user := &models.User{
 		Username: req.Username,
+		Password: string(hashedPassword),
 	}
-	err := s.repo.CreateUser(user)
-	if err != nil {
+	if err := s.repo.CreateUser(user); err != nil {
 		return nil, err
 	}
 	return user, nil
@@ -131,4 +144,30 @@ func (s *todoService) AttachTags(todo *models.Todo, tags []models.Tag) error {
 
 func (s *todoService) CompleteOverdueTodos(now time.Time) (int64, error) {
 	return s.repo.CompleteOverdueTodos(now)
+}
+
+func (s *userService) Userlogin(req *models.Login) (string, error) {
+	user, err := s.repo.GetUserByUsername(req.Username)
+	if err != nil {
+		return "", fmt.Errorf("user not found")
+	}
+
+	// Compare password
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if err != nil {
+		return "", fmt.Errorf("invalid password")
+	}
+
+	// Create JWT token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte("secret_key"))
+	if err != nil {
+		return "token", err
+	}
+
+	return tokenString, nil
 }

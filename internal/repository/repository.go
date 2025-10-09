@@ -12,6 +12,7 @@ import (
 type TodoRepository interface {
 	CreateTodo(todo *models.Todo) error
 	GetAllTodos() ([]models.Todo, error)
+	GetTodoByID(userID, id uuid.UUID) (*models.Todo, error)
 	UpdateTodo(userID, id uuid.UUID, req *models.UpdateTodoRequest) (*models.Todo, error)
 	DeleteTodo(userID, id uuid.UUID) (*models.Todo, error)
 	GetTodosByUser(userID uuid.UUID) ([]models.Todo, error)
@@ -22,6 +23,7 @@ type TodoRepository interface {
 type UserRepository interface {
 	CreateUser(user *models.User) error
 	GetUserByID(id uuid.UUID) (*models.User, error)
+	GetUserByUsername(username string) (*models.User, error)
 }
 
 type TagRepository interface {
@@ -86,6 +88,14 @@ func (a *todoRepository) GetAllTodos() ([]models.Todo, error) {
 		return nil, fmt.Errorf("failed to get todo %w", err)
 	}
 	return todos, nil
+}
+
+func (a *todoRepository) GetTodoByID(userID, id uuid.UUID) (*models.Todo, error) {
+	var todo models.Todo
+	if err := a.db.Where("user_id = ? AND id = ?", userID, id).Preload("Tags").First(&todo).Error; err != nil {
+		return nil, err
+	}
+	return &todo, nil
 }
 
 func (a *todoRepository) UpdateTodo(userID, id uuid.UUID, req *models.UpdateTodoRequest) (*models.Todo, error) {
@@ -190,4 +200,13 @@ func (a *todoRepository) CompleteOverdueTodos(now time.Time) (int64, error) {
 		return 0, fmt.Errorf("failed to complete overdue todos: %w", tx.Error)
 	}
 	return tx.RowsAffected, nil
+}
+
+func (a *userRepository) GetUserByUsername(username string) (*models.User, error) {
+	var user models.User
+
+	if err := a.db.First(&user, "username=?", username).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

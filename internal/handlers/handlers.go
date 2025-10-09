@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/danieldzansi/auth-api/internal/models"
@@ -41,8 +40,13 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, user)
 }
 func (h *TodoHandler) CreateTodo(c *gin.Context) {
-	userIDParam := c.Param("user_id")
-	userID, err := uuid.Parse(userIDParam)
+	userIDValue, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	userID, err := uuid.Parse(userIDValue.(string))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
 		return
@@ -59,6 +63,7 @@ func (h *TodoHandler) CreateTodo(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	if len(req.TagIDs) > 0 {
 		tags, err := h.tagSvc.GetTagsByIDs(userID, req.TagIDs)
 		if err != nil {
@@ -70,7 +75,6 @@ func (h *TodoHandler) CreateTodo(c *gin.Context) {
 			return
 		}
 		if err := h.svc.AttachTags(todo, tags); err != nil {
-			log.Printf("error attaching tags to todo %s: %v", todo.ID, err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to attach tags"})
 			return
 		}
@@ -79,11 +83,16 @@ func (h *TodoHandler) CreateTodo(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, todo)
 }
+
 func (h *TodoHandler) GetAllTodos(c *gin.Context) {
-	userIDParam := c.Param("user_id")
-	userID, err := uuid.Parse(userIDParam)
+	userIDValue, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID, err := uuid.Parse(userIDValue.(string))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID in token"})
 		return
 	}
 
@@ -94,11 +103,41 @@ func (h *TodoHandler) GetAllTodos(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, todos)
 }
-func (h *TodoHandler) UpdateTodoHandler(c *gin.Context) {
-	userIDParam := c.Param("user_id")
-	userID, err := uuid.Parse(userIDParam)
+func (h *TodoHandler) GetTodoByID(c *gin.Context) {
+	userIDValue, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID, err := uuid.Parse(userIDValue.(string))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID in token"})
+		return
+	}
+
+	idParam := c.Param("id")
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid todo ID"})
+		return
+	}
+
+	todo, err := h.svc.GetTodoByID(userID, id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "todo not found"})
+		return
+	}
+	c.JSON(http.StatusOK, todo)
+}
+func (h *TodoHandler) UpdateTodoHandler(c *gin.Context) {
+	userIDValue, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID in token"})
 		return
 	}
 
@@ -124,10 +163,14 @@ func (h *TodoHandler) UpdateTodoHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": todo})
 }
 func (h *TodoHandler) DeleteTodoHandler(c *gin.Context) {
-	userIDParam := c.Param("user_id")
-	userID, err := uuid.Parse(userIDParam)
+	userIDValue, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID, err := uuid.Parse(userIDValue.(string))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID in token"})
 		return
 	}
 
@@ -159,10 +202,14 @@ func NewTagHandler(s service.TagService) *TagHandler {
 	return &TagHandler{svc: s}
 }
 func (h *TagHandler) CreateTag(c *gin.Context) {
-	userIDParam := c.Param("user_id")
-	userID, err := uuid.Parse(userIDParam)
+	userIDValue, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID, err := uuid.Parse(userIDValue.(string))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID in token"})
 		return
 	}
 
@@ -181,10 +228,14 @@ func (h *TagHandler) CreateTag(c *gin.Context) {
 	c.JSON(http.StatusCreated, tag)
 }
 func (h *TagHandler) GetTagsByUser(c *gin.Context) {
-	userIDParam := c.Param("user_id")
-	userID, err := uuid.Parse(userIDParam)
+	userIDValue, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID, err := uuid.Parse(userIDValue.(string))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID in token"})
 		return
 	}
 
@@ -197,10 +248,14 @@ func (h *TagHandler) GetTagsByUser(c *gin.Context) {
 	c.JSON(http.StatusOK, tags)
 }
 func (h *TagHandler) DeleteTag(c *gin.Context) {
-	userIDParam := c.Param("user_id")
-	userID, err := uuid.Parse(userIDParam)
+	userIDValue, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID, err := uuid.Parse(userIDValue.(string))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user ID in token"})
 		return
 	}
 
@@ -221,4 +276,18 @@ func (h *TagHandler) DeleteTag(c *gin.Context) {
 		"success": true,
 		"message": "Tag deleted successfully",
 	})
+}
+
+func (h *UserHandler) Userlogin(c *gin.Context) {
+	var req models.Login
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	user, err := h.svc.Userlogin(&req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, user)
 }

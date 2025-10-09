@@ -55,14 +55,20 @@ func main() {
 		})
 
 		users := api.Group("/users")
+		userlogin := api.Group("/userlogin")
 		{
 
 			users.POST("/", userHandler.CreateUser)
+			userlogin.POST("/", userHandler.Userlogin)
+			auth := users.Group("/")
+			auth.Use(handlers.AuthMiddleware())
 
-			userTodos := users.Group("/:user_id/todos")
+			userTodos := users.Group("/todos")
+			userTodos.Use(handlers.AuthMiddleware())
 			{
 				userTodos.POST("/", todoHandler.CreateTodo)             // POST   /api/v1/users/:user_id/todos
 				userTodos.GET("/", todoHandler.GetAllTodos)             // GET    /api/v1/users/:user_id/todos
+				userTodos.GET("/:id", todoHandler.GetTodoByID)          // GET    /api/v1/users/:user_id/todos/:id
 				userTodos.PATCH("/:id", todoHandler.UpdateTodoHandler)  // PATCH  /api/v1/users/:user_id/todos/:id
 				userTodos.DELETE("/:id", todoHandler.DeleteTodoHandler) // DELETE /api/v1/users/:user_id/todos/:id
 			}
@@ -93,6 +99,7 @@ func main() {
 			}()
 
 			userTags := users.Group("/:user_id/tags")
+			userTags.Use(handlers.AuthMiddleware())
 			{
 				userTags.POST("/", tagHandler.CreateTag)      // POST   /api/v1/users/:user_id/tags
 				userTags.GET("/", tagHandler.GetTagsByUser)   // GET    /api/v1/users/:user_id/tags

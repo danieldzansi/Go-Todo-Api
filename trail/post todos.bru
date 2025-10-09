@@ -5,16 +5,19 @@ meta {
 }
 
 post {
-  url: http://localhost:8080/api/v1/users/716d6bef-83ec-4515-8a0c-0e2d66965ee6/todos
+  url: http://localhost:8080/api/v1/users/todos
   body: json
   auth: inherit
 }
 
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NjAxMTAzODIsInVzZXJfaWQiOiJkMjE2MzdjYy1mOWE5LTRlY2QtODYzNS02ZTRmOTc3YjNiNjAifQ.1UrquDNvaT38FRuVfEKt6LuGghr1dBMaQWFgJ3RbDik
+}
+
 body:json {
   {
-    "title":"a pointer in Go",
+    "title":"javascript is a programming lanquage",
     "description":"testing api endpoint",
-    "tag_ids":["6baadd0d-7223-488d-bd37-6e1686d226d7"],
     "completed":true
   }
 }
