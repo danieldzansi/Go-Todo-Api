@@ -151,14 +151,10 @@ func (s *userService) Userlogin(req *models.Login) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("user not found")
 	}
-
-	// Compare password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
 		return "", fmt.Errorf("invalid password")
 	}
-
-	// Create JWT token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),

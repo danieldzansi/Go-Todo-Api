@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
@@ -45,6 +46,15 @@ func main() {
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://127.0.0.1:5500", "http://localhost:5500"}, // your frontend origin
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	api := router.Group("/api/v1")
 	{
 		api.GET("/health", func(c *gin.Context) {
@@ -67,10 +77,10 @@ func main() {
 			userTodos.Use(handlers.AuthMiddleware())
 			{
 				userTodos.POST("/", todoHandler.CreateTodo)             // POST   /api/v1/users/:user_id/todos
-				userTodos.GET("/", todoHandler.GetAllTodos)             // GET    /api/v1/users/:user_id/todos
-				userTodos.GET("/:id", todoHandler.GetTodoByID)          // GET    /api/v1/users/:user_id/todos/:id
-				userTodos.PATCH("/:id", todoHandler.UpdateTodoHandler)  // PATCH  /api/v1/users/:user_id/todos/:id
-				userTodos.DELETE("/:id", todoHandler.DeleteTodoHandler) // DELETE /api/v1/users/:user_id/todos/:id
+				userTodos.GET("/", todoHandler.GetAllTodos)             // GET    /api/v1/users/todos
+				userTodos.GET("/:id", todoHandler.GetTodoByID)          // GET    /api/v1/users/todos/:id
+				userTodos.PATCH("/:id", todoHandler.UpdateTodoHandler)  // PATCH  /api/v1/users/todos/:id
+				userTodos.DELETE("/:id", todoHandler.DeleteTodoHandler) // DELETE /api/v1/users/todos/:id
 			}
 
 			intervalStr := os.Getenv("DUE_CHECK_INTERVAL")
