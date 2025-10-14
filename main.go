@@ -47,7 +47,11 @@ func main() {
 	router.Use(gin.Recovery())
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://go-todo-api-1.onrender.com", "http://localhost:5500"}, // your frontend origin
+		AllowOrigins: []string{
+			"https://todo-manager-orcin.vercel.app", // your frontend
+			"https://go-todo-api-1.onrender.com",    // your backend
+			"http://localhost:5500",                 // local dev
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
